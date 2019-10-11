@@ -7,14 +7,14 @@ import pandas as pd
 import pickle
 from sklearn.model_selection import train_test_split
 
-
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 from nltk import word_tokenize
 from nltk.corpus import stopwords
 
+# function to filter word, same as on preprocessing
+
 max_len = 150
 stopwords = set(stopwords.words('english'))
-
 detokenizer = TreebankWordDetokenizer()
 
 def clean_description(desc):
@@ -25,9 +25,10 @@ def clean_description(desc):
     desc = [token for token in desc if token not in stopwords and token.isalpha()]
     return detokenizer.detokenize(desc)
 
-
+# load trained model
 model = load_model('model_batch128_weights_smaller.h5')
 
+# data to be tested
 # 5,5,3,1,  2,4,4,5
 review = [clean_description("Great product I would buy it again for sure.")]
 review.append(clean_description("Another great product.  Just love this Biotin B-complex thickening conditioner.  It really helps the hair to look fuller and to grow."))
@@ -39,11 +40,7 @@ review.append(clean_description("The only drawback is that it's a common fragran
 
 review.append(clean_description("The shampoo is really nice on my hair, it doest not dry my skin out, which is wonderful"))
 
-#cleanedReview = clean_description(review)
 
-#print(review)
-
-#in_str = [cleanedReview]
 test_frame = pd.DataFrame(review, columns=['reviews'])
 
 # reviews_frame = pd.read_pickle("pandas_reviews.pkl")
@@ -55,15 +52,15 @@ test_frame = pd.DataFrame(review, columns=['reviews'])
 # tokenizer.fit_on_texts(X_train)
 #tokenizer.fit_on_texts(test_frame["reviews"])
 
+# load tokenizer form training
 with open('tokenizer.pickle', 'rb') as handle:
     tokenizer = pickle.load(handle)
 
-# sequences_train = tokenizer.texts_to_sequences(X_train)
+# tokenize and pad test data
 sequences_test = tokenizer.texts_to_sequences(test_frame["reviews"])
-
 X_test = pad_sequences(sequences_test, maxlen=max_len)
 
-
+# evaluate
 
 pred_test = model.predict(X_test)
 print(pred_test)

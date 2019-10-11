@@ -95,6 +95,7 @@ for word, i in word_index.items():
 
 # TRAINING ------------------------------------------------------------------------------------------------------
 
+# create embedding layer to match the populated embeddings
 embedding_layer = Embedding(len(word_index) + 1,
                             embedding_dim,
                             weights=[embedding_matrix],
@@ -106,6 +107,7 @@ print("embedding finished")
 input = Input(shape=(max_len,), dtype='int32')
 embedded_sequences = embedding_layer(input)
 
+# Structure model architecture with bidirectional GRU
 # Uncomment for GPU usage and comment the other command
 #x = Bidirectional(CuDNNGRU(50, return_sequences=True))(embedded_sequences)
 x = Bidirectional(GRU(50, return_sequences=True))(embedded_sequences)
@@ -118,20 +120,24 @@ output = Dense(num_classes, activation='softmax')(x)
 model = Model(inputs=input, outputs=output)
 model.summary()
 
+# adjust training parameters
 model.compile(loss="categorical_crossentropy", optimizer='adam', metrics=['accuracy'])
-
 checkpoint = ModelCheckpoint("model.h5", monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 early = EarlyStopping(monitor='val_loss', mode='min', patience=6)
 callback = [checkpoint, early]
 
 print("Model configuration finished, training started...")
 
+# train the model
 model.fit(X_train, y_train,
           batch_size=batch_size,
           epochs=epochs,
           validation_data=(X_val, y_val),
           callbacks=callback,
           class_weight=class_weights)
+
+
+# save the used tokenizer to use on future evaluations of the model
 
 print("saving tokenizer to test")
 with open('tokenizer.pickle', 'wb') as handle:
